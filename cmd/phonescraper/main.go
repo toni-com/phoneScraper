@@ -10,7 +10,7 @@ import (
 
 func main() {
 	// Load Config
-	items, err := config.LoadConfig("config.json")
+	items, err := config.LoadConfig("config2.json")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -30,16 +30,16 @@ func main() {
 			for item := range j {
 				scrapeResult, err := scraper.Scrape(item.URL, item.Selector)
 				if err != nil {
-					log.Printf("Failed to scrape price %s: %v", item.Name, err)
+					log.Printf("Failed to scrape price %s: %v\n", item.Name, err)
 					continue
 				}
 				priceClean, err := scraper.ParsePrice(scrapeResult)
 				if err != nil {
-					log.Printf("Failed to parse price %s: %v", item.Name, err)
+					log.Printf("Failed to parse price %s: %v\n", item.Name, err)
 					continue
 				}
 				if priceClean < item.Threshold {
-					fmt.Printf("Alert: {%s} on sale for {%.2f}", item.Name, priceClean)
+					fmt.Printf("Alert: {%s} on sale for {%.2f}\n", item.Name, priceClean)
 				}
 			}
 		}(jobs)

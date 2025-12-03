@@ -48,7 +48,7 @@ func TestScrapeNotFound(t *testing.T) {
 	}))
 	defer server.Close()
 
-	// This class does not exist in our mock HTML
+	// This class does not exist in mock HTML
 	selector := ".non-existent-class"
 
 	got, err := Scrape(server.URL, selector)
@@ -57,7 +57,7 @@ func TestScrapeNotFound(t *testing.T) {
 		t.Fatalf("Scrape error: %v", err)
 	}
 
-	// If selector isn't found, we expect an empty string (or handle it how you prefer)
+	// If selector isn't found, expect an empty string
 	if got != "" {
 		t.Errorf("Expected empty string for missing selector, got '%s'", got)
 	}
