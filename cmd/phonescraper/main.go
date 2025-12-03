@@ -17,31 +17,40 @@ func main() {
 
 	//Setup Concurrency Control
 	var wg sync.WaitGroup
+	jobs := make(chan config.ItemConfig, len(items))
+	const workerLimit int = 3
+
+	// start worker
+	for i := 0; i < workerLimit; i++ {
+		wg.Add(1)
+		// goroutine
+		go func(j chan config.ItemConfig) {
+			defer wg.Done()
+			// loop over job
+			for item := range j {
+				scrapeResult, err := scraper.Scrape(item.URL, item.Selector)
+				if err != nil {
+					log.Printf("Failed to scrape price %s: %v", item.Name, err)
+					continue
+				}
+				priceClean, err := scraper.ParsePrice(scrapeResult)
+				if err != nil {
+					log.Printf("Failed to parse price %s: %v", item.Name, err)
+					continue
+				}
+				if priceClean < item.Threshold {
+					fmt.Printf("Alert: {%s} on sale for {%.2f}", item.Name, priceClean)
+				}
+			}
+		}(jobs)
+	}
 
 	fmt.Printf("Starting sniper on %d items...\n", len(items))
-
-	//Loop over items
 	for _, item := range items {
-		wg.Add(1)
-
-		// Goroutine
-		go func(i config.ItemConfig) {
-			defer wg.Done()
-			scrapeResult, err := scraper.Scrape(i.URL, i.Selector)
-			if err != nil {
-				log.Printf("Failed to scrape price %s: %v", i.Name, err)
-				return
-			}
-			priceClean, err := scraper.ParsePrice(scrapeResult)
-			if err != nil {
-				log.Printf("Failed to parse price %s: %v", i.Name, err)
-				return
-			}
-			if priceClean < i.Threshold {
-				fmt.Printf("Alert: {%s} on sale for {%.2f}", i.Name, priceClean)
-			}
-		}(item)
+		jobs <- item
 	}
+	close(jobs)
+
 	wg.Wait()
 	fmt.Println("All checks complete.")
 }
